@@ -114,4 +114,32 @@ class ChatServerTest {
         server.unblockUser(bob, alice);
         assertFalse(server.isBlocked(bob, alice));
     }
+
+    @Test
+    void undoMessageRemovesItFromEveryRecipient() {
+        Message message = new Message(alice, List.of(bob, charlie), "oops");
+        server.sendMessage(message);
+        server.undoMessage(alice, message.createMemento());
+        assertTrue(bob.getChatHistory().getMessages().isEmpty());
+        assertTrue(charlie.getChatHistory().getMessages().isEmpty());
+    }
+
+    @Test
+    void undoMessageLeavesOtherMessagesAlone() {
+        Message keep = new Message(alice, List.of(bob), "keep me");
+        Message oops = new Message(alice, List.of(bob), "oops");
+        server.sendMessage(keep);
+        server.sendMessage(oops);
+        server.undoMessage(alice, oops.createMemento());
+        assertEquals(List.of(keep), bob.getChatHistory().getMessages());
+    }
+
+    @Test
+    void undoMessageNeedsARegisteredSender() {
+        Message message = new Message(alice, List.of(bob), "oops");
+        server.sendMessage(message);
+        server.unregisterUser(alice);
+        assertThrows(IllegalStateException.class, () -> server.undoMessage(alice, message.createMemento()));
+        assertEquals(1, bob.getChatHistory().getMessages().size(), "Bob should still have the message");
+    }
 }

@@ -52,8 +52,7 @@ public class Message {
 
     /** Memento: takes a snapshot of this message's content and timestamp. */
     public MessageMemento createMemento() {
-        // TODO (Step 3)
-        throw new UnsupportedOperationException("TODO: Step 3");
+        return new MessageMemento(content, timestamp);
     }
 
     /**
@@ -61,8 +60,7 @@ public class Message {
      * timestamp.
      */
     public boolean matches(MessageMemento memento) {
-        // TODO (Step 3)
-        throw new UnsupportedOperationException("TODO: Step 3");
+        return content.equals(memento.getContent()) && timestamp.equals(memento.getTimestamp());
     }
 
     @Override

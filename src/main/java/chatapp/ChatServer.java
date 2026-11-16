@@ -47,9 +47,6 @@ public class ChatServer {
         }
     }
 
-    /**
-     * After this, {@code blocker} no longer receives messages from {@code blocked}.
-     */
     public void blockUser(User blocker, User blocked) {
         Set<User> blockList = blockLists.get(blocker);
         if (blockList == null) {
@@ -77,8 +74,15 @@ public class ChatServer {
      * describes.
      */
     public void undoMessage(User sender, MessageMemento memento) {
-        // TODO (Step 3)
-        throw new UnsupportedOperationException("TODO: Step 3");
+        if (!isRegistered(sender)) {
+            throw new IllegalStateException(sender.getName() + " is not registered with the server");
+        }
+        log(sender.getName() + " undid " + memento);
+        for (User user : users) {
+            if (!user.equals(sender)) {
+                user.receiveUndo(sender, memento);
+            }
+        }
     }
 
     private void log(String text) {

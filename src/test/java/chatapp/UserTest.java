@@ -1,6 +1,8 @@
 package chatapp;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -116,6 +118,91 @@ class UserTest {
     void viewChatHistorySaysWhenThereAreNoMessages() {
         String output = printedBy(() -> charlie.viewChatHistory());
         assertTrue(output.contains("(no messages)"));
+    }
+
+    @Test
+    void sendingAMessageSavesAMementoOfIt() {
+        Message message = alice.sendMessage("Hello!", bob);
+        MessageMemento memento = alice.getChatHistory().getLastMessageSent();
+        assertEquals("Hello!", memento.getContent());
+        assertEquals(message.getTimestamp(), memento.getTimestamp());
+    }
+
+    @Test
+    void undoLastMessageRemovesItFromTheSenderAndEveryRecipient() {
+        alice.sendMessage("Oops, wrong chat", bob, charlie);
+        alice.undoLastMessage();
+        assertTrue(alice.getChatHistory().getMessages().isEmpty());
+        assertTrue(bob.getChatHistory().getMessages().isEmpty());
+        assertTrue(charlie.getChatHistory().getMessages().isEmpty());
+    }
+
+    @Test
+    void undoLastMessageReturnsTheMementoThatWasUndone() {
+        Message message = alice.sendMessage("Oops", bob);
+        MessageMemento undone = alice.undoLastMessage();
+        assertEquals("Oops", undone.getContent());
+        assertEquals(message.getTimestamp(), undone.getTimestamp());
+    }
+
+    @Test
+    void undoOnlyRemovesTheLastMessage() {
+        Message first = alice.sendMessage("First", bob);
+        alice.sendMessage("Second", bob);
+        alice.undoLastMessage();
+        assertEquals(List.of(first), alice.getChatHistory().getMessages());
+        assertEquals(List.of(first), bob.getChatHistory().getMessages());
+    }
+
+    @Test
+    void undoingTwiceRemovesTheLastTwoMessages() {
+        alice.sendMessage("First", bob);
+        alice.sendMessage("Second", bob);
+        alice.undoLastMessage();
+        alice.undoLastMessage();
+        assertTrue(alice.getChatHistory().getMessages().isEmpty());
+        assertTrue(bob.getChatHistory().getMessages().isEmpty());
+    }
+
+    @Test
+    void undoNeverRemovesMessagesFromOtherUsers() {
+        Message fromBob = bob.sendMessage("Hi Alice", alice);
+        alice.sendMessage("Oops", bob);
+        alice.undoLastMessage();
+        assertEquals(List.of(fromBob), alice.getChatHistory().getMessages());
+        assertEquals(List.of(fromBob), bob.getChatHistory().getMessages());
+    }
+
+    @Test
+    void undoWithNothingSentReturnsNull() {
+        assertNull(alice.undoLastMessage());
+    }
+
+    @Test
+    void undoWorksEvenIfARecipientBlockedTheSender() {
+        bob.blockUser(alice);
+        alice.sendMessage("Hi both", bob, charlie);
+        alice.undoLastMessage();
+        assertTrue(alice.getChatHistory().getMessages().isEmpty());
+        assertTrue(charlie.getChatHistory().getMessages().isEmpty());
+    }
+
+    @Test
+    void failedUndoChangesNothing() {
+        Message message = alice.sendMessage("Oops", bob);
+        server.unregisterUser(alice);
+        assertThrows(IllegalStateException.class, () -> alice.undoLastMessage());
+        assertEquals(List.of(message), alice.getChatHistory().getMessages());
+        assertEquals(List.of(message), bob.getChatHistory().getMessages());
+        assertNotNull(alice.getChatHistory().getLastMessageSent(), "the memento should still be there to try again");
+    }
+
+    @Test
+    void receiveUndoRemovesThatMessageFromTheHistory() {
+        Message message = new Message(alice, List.of(bob), "Oops");
+        bob.receiveMessage(message);
+        bob.receiveUndo(alice, message.createMemento());
+        assertTrue(bob.getChatHistory().getMessages().isEmpty());
     }
 
     private static String printedBy(Runnable action) {

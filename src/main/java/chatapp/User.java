@@ -21,15 +21,11 @@ public class User {
         return chatHistory;
     }
 
-    /**
-     * Sends a message to one or more users through the server.
-     *
-     * @return the message that was sent
-     */
     public Message sendMessage(String content, User... recipients) {
         Message message = new Message(this, Arrays.asList(recipients), content);
         chatServer.sendMessage(message);
         chatHistory.addMessage(message);
+        chatHistory.saveMemento(message.createMemento());
         return message;
     }
 
@@ -38,21 +34,20 @@ public class User {
         chatHistory.addMessage(message);
     }
 
-    /**
-     * Undoes the last message this user sent, everywhere it was delivered.
-     *
-     * @return the snapshot of the undone message, or null if there was nothing to
-     *         undo
-     */
     public MessageMemento undoLastMessage() {
-        // TODO (Step 3)
-        throw new UnsupportedOperationException("TODO: Step 3");
+        MessageMemento memento = chatHistory.getLastMessageSent();
+        if (memento == null) {
+            return null;
+        }
+        chatServer.undoMessage(this, memento);
+        chatHistory.popLastMessageSent();
+        chatHistory.removeMessage(this, memento);
+        return memento;
     }
 
     /** Called by the server when another user undoes a message they sent. */
     public void receiveUndo(User sender, MessageMemento memento) {
-        // TODO (Step 3)
-        throw new UnsupportedOperationException("TODO: Step 3");
+        chatHistory.removeMessage(sender, memento);
     }
 
     /** Stops receiving messages from {@code user}. The server enforces it. */

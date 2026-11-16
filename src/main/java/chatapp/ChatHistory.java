@@ -6,14 +6,6 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 
-/**
- * One user's chat history: every message they sent or received, oldest first.
- *
- * <p>Memento pattern role: CARETAKER. It also keeps a stack of snapshots
- * ({@link MessageMemento}) of the messages its user sent, newest on top.
- * It stores the snapshots and hands back the newest one for undo, but it
- * never changes them.
- */
 public class ChatHistory {
     private final List<Message> messages = new ArrayList<>();
     private final Deque<MessageMemento> sentMementos = new ArrayDeque<>();
@@ -30,29 +22,36 @@ public class ChatHistory {
 
     /** Caretaker: saves the snapshot of a message this user just sent. */
     public void saveMemento(MessageMemento memento) {
-        // TODO (Step 3)
-        throw new UnsupportedOperationException("TODO: Step 3");
-    }
-
-    /** Returns the snapshot of the last message sent without removing it, or null if there is none. */
-    public MessageMemento getLastMessageSent() {
-        // TODO (Step 3)
-        throw new UnsupportedOperationException("TODO: Step 3");
-    }
-
-    /** Removes and returns the snapshot of the last message sent, or null if there is none. */
-    public MessageMemento popLastMessageSent() {
-        // TODO (Step 3)
-        throw new UnsupportedOperationException("TODO: Step 3");
+        sentMementos.push(memento);
     }
 
     /**
-     * Removes the newest message from {@code sender} that matches the snapshot.
-     *
-     * @return true if a message was removed
+     * Returns the snapshot of the last message sent without removing it, or null if
+     * there is none.
      */
+    public MessageMemento getLastMessageSent() {
+        return sentMementos.peek();
+    }
+
+    /**
+     * Removes and returns the snapshot of the last message sent, or null if there
+     * is none.
+     */
+    public MessageMemento popLastMessageSent() {
+        if (sentMementos.isEmpty()) {
+            return null;
+        }
+        return sentMementos.pop();
+    }
+
     public boolean removeMessage(User sender, MessageMemento memento) {
-        // TODO (Step 3)
-        throw new UnsupportedOperationException("TODO: Step 3");
+        for (int i = messages.size() - 1; i >= 0; i--) {
+            Message message = messages.get(i);
+            if (message.getSender().equals(sender) && message.matches(memento)) {
+                messages.remove(i);
+                return true;
+            }
+        }
+        return false;
     }
 }

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -71,5 +72,28 @@ class MessageTest {
     void toStringShowsTimeSenderRecipientsAndContent() {
         Message message = new Message(alice, List.of(bob, charlie), "Hello!", time);
         assertEquals("[14:05:09] Alice -> Bob, Charlie: Hello!", message.toString());
+    }
+
+    @Test
+    void createMementoCopiesContentAndTimestamp() {
+        Message message = new Message(alice, List.of(bob), "Hello!", time);
+        MessageMemento memento = message.createMemento();
+        assertEquals("Hello!", memento.getContent());
+        assertEquals(time, memento.getTimestamp());
+    }
+
+    @Test
+    void matchesItsOwnMemento() {
+        Message message = new Message(alice, List.of(bob), "Hello!", time);
+        assertTrue(message.matches(message.createMemento()));
+    }
+
+    @Test
+    void doesNotMatchAMementoWithDifferentContentOrTime() {
+        Message message = new Message(alice, List.of(bob), "Hello!", time);
+        Message otherContent = new Message(alice, List.of(bob), "Bye!", time);
+        Message otherTime = new Message(alice, List.of(bob), "Hello!", time.plusSeconds(1));
+        assertFalse(message.matches(otherContent.createMemento()));
+        assertFalse(message.matches(otherTime.createMemento()));
     }
 }
