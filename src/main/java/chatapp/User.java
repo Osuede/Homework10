@@ -1,15 +1,8 @@
 package chatapp;
 
-/**
- * A person using the chat app.
- *
- * <p>Mediator pattern role: COLLEAGUE. A user only talks to the {@link ChatServer}
- * (the mediator), never directly to another user. Even when Alice sends a message
- * to Bob, she just hands it to the server, and the server decides whether Bob gets it.
- *
- * <p>Memento pattern: every message a user sends is snapshotted into their
- * {@link ChatHistory}, so {@link #undoLastMessage()} can take it back later.
- */
+import java.util.Arrays;
+import java.util.List;
+
 public class User {
     private final String name;
     private final ChatServer chatServer; // the mediator: the only object this user talks to
@@ -34,20 +27,22 @@ public class User {
      * @return the message that was sent
      */
     public Message sendMessage(String content, User... recipients) {
-        // TODO (Step 2)
-        throw new UnsupportedOperationException("TODO: Step 2");
+        Message message = new Message(this, Arrays.asList(recipients), content);
+        chatServer.sendMessage(message);
+        chatHistory.addMessage(message);
+        return message;
     }
 
     /** Called by the server when someone sends this user a message. */
     public void receiveMessage(Message message) {
-        // TODO (Step 2)
-        throw new UnsupportedOperationException("TODO: Step 2");
+        chatHistory.addMessage(message);
     }
 
     /**
      * Undoes the last message this user sent, everywhere it was delivered.
      *
-     * @return the snapshot of the undone message, or null if there was nothing to undo
+     * @return the snapshot of the undone message, or null if there was nothing to
+     *         undo
      */
     public MessageMemento undoLastMessage() {
         // TODO (Step 3)
@@ -62,19 +57,23 @@ public class User {
 
     /** Stops receiving messages from {@code user}. The server enforces it. */
     public void blockUser(User user) {
-        // TODO (Step 2)
-        throw new UnsupportedOperationException("TODO: Step 2");
+        chatServer.blockUser(this, user);
     }
 
     public void unblockUser(User user) {
-        // TODO (Step 2)
-        throw new UnsupportedOperationException("TODO: Step 2");
+        chatServer.unblockUser(this, user);
     }
 
     /** Prints this user's whole chat history. */
     public void viewChatHistory() {
-        // TODO (Step 2)
-        throw new UnsupportedOperationException("TODO: Step 2");
+        System.out.println(name + "'s chat history:");
+        List<Message> messages = chatHistory.getMessages();
+        if (messages.isEmpty()) {
+            System.out.println("  (no messages)");
+        }
+        for (Message message : messages) {
+            System.out.println("  " + message);
+        }
     }
 
     @Override

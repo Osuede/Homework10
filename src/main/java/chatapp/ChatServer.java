@@ -2,72 +2,86 @@ package chatapp;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Mediator pattern role: MEDIATOR.
- *
- * <p>The central chat server. Users never talk to each other directly. They hand
- * everything to the server, and the server decides what happens:
- * <ul>
- *   <li>who is registered and allowed to send and receive</li>
- *   <li>who has blocked whom</li>
- *   <li>delivering a message to one or more recipients</li>
- *   <li>removing a message from everyone when its sender undoes it</li>
- * </ul>
- */
 public class ChatServer {
     private final List<User> users = new ArrayList<>();
     // blocker -> the senders they have blocked
-    private final Map<User, Set<User>> blockedSenders = new HashMap<>();
+    private final Map<User, Set<User>> blockLists = new HashMap<>();
 
     public void registerUser(User user) {
-        // TODO (Step 2)
-        throw new UnsupportedOperationException("TODO: Step 2");
+        if (!users.contains(user)) {
+            users.add(user);
+            log(user.getName() + " registered");
+        }
     }
 
     public void unregisterUser(User user) {
-        // TODO (Step 2)
-        throw new UnsupportedOperationException("TODO: Step 2");
+        if (users.remove(user)) {
+            log(user.getName() + " unregistered");
+        }
     }
 
     public boolean isRegistered(User user) {
-        // TODO (Step 2)
-        throw new UnsupportedOperationException("TODO: Step 2");
+        return users.contains(user);
+    }
+
+    public void sendMessage(Message message) {
+        User sender = message.getSender();
+        if (!isRegistered(sender)) {
+            throw new IllegalStateException(sender.getName() + " is not registered with the server");
+        }
+        for (User recipient : message.getRecipients()) {
+            String delivery = sender.getName() + " -> " + recipient.getName() + ": \"" + message.getContent() + "\" ";
+            if (!isRegistered(recipient)) {
+                log(delivery + "NOT DELIVERED (" + recipient.getName() + " is not registered)");
+            } else if (isBlocked(recipient, sender)) {
+                log(delivery + "BLOCKED (" + recipient.getName() + " blocked " + sender.getName() + ")");
+            } else {
+                recipient.receiveMessage(message);
+                log(delivery + "delivered");
+            }
+        }
     }
 
     /**
-     * Delivers the message to each recipient, skipping anyone who is not registered
-     * or who has blocked the sender.
-     *
-     * @throws IllegalStateException if the sender is not registered
+     * After this, {@code blocker} no longer receives messages from {@code blocked}.
      */
-    public void sendMessage(Message message) {
-        // TODO (Step 2)
-        throw new UnsupportedOperationException("TODO: Step 2");
-    }
-
-    /** After this, {@code blocker} no longer receives messages from {@code blocked}. */
     public void blockUser(User blocker, User blocked) {
-        // TODO (Step 2)
-        throw new UnsupportedOperationException("TODO: Step 2");
+        Set<User> blockList = blockLists.get(blocker);
+        if (blockList == null) {
+            blockList = new HashSet<>();
+            blockLists.put(blocker, blockList);
+        }
+        blockList.add(blocked);
+        log(blocker.getName() + " blocked " + blocked.getName());
     }
 
     public void unblockUser(User blocker, User blocked) {
-        // TODO (Step 2)
-        throw new UnsupportedOperationException("TODO: Step 2");
+        Set<User> blockList = blockLists.get(blocker);
+        if (blockList != null && blockList.remove(blocked)) {
+            log(blocker.getName() + " unblocked " + blocked.getName());
+        }
     }
 
     public boolean isBlocked(User recipient, User sender) {
-        // TODO (Step 2)
-        throw new UnsupportedOperationException("TODO: Step 2");
+        Set<User> blockList = blockLists.get(recipient);
+        return blockList != null && blockList.contains(sender);
     }
 
-    /** Tells every other registered user to remove the message the snapshot describes. */
+    /**
+     * Tells every other registered user to remove the message the snapshot
+     * describes.
+     */
     public void undoMessage(User sender, MessageMemento memento) {
         // TODO (Step 3)
         throw new UnsupportedOperationException("TODO: Step 3");
+    }
+
+    private void log(String text) {
+        System.out.println("[Server] " + text);
     }
 }

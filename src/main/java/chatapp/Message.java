@@ -6,13 +6,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-/**
- * One chat message: who sent it, who it is for, when it was sent, and what it says.
- *
- * <p>Memento pattern role: ORIGINATOR. A message can take a snapshot of itself
- * ({@link #createMemento()}) and check whether a snapshot was taken from it
- * ({@link #matches(MessageMemento)}).
- */
 public class Message {
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm:ss");
 
@@ -63,7 +56,10 @@ public class Message {
         throw new UnsupportedOperationException("TODO: Step 3");
     }
 
-    /** Memento: true if the snapshot was taken from a message with this content and timestamp. */
+    /**
+     * Memento: true if the snapshot was taken from a message with this content and
+     * timestamp.
+     */
     public boolean matches(MessageMemento memento) {
         // TODO (Step 3)
         throw new UnsupportedOperationException("TODO: Step 3");
