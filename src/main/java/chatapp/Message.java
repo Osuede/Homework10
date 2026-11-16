@@ -1,6 +1,9 @@
 package chatapp;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
@@ -11,6 +14,8 @@ import java.util.List;
  * ({@link #matches(MessageMemento)}).
  */
 public class Message {
+    private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm:ss");
+
     private final User sender;
     private final List<User> recipients;
     private final LocalDateTime timestamp;
@@ -23,9 +28,15 @@ public class Message {
 
     /** Creates a message with a specific timestamp (handy in tests). */
     public Message(User sender, List<User> recipients, String content, LocalDateTime timestamp) {
-        // TODO (Step 1): check the arguments and keep an unmodifiable copy of the recipients
+        List<User> uniqueRecipients = List.copyOf(new LinkedHashSet<>(recipients));
+        if (uniqueRecipients.isEmpty()) {
+            throw new IllegalArgumentException("A message needs at least one recipient");
+        }
+        if (uniqueRecipients.contains(sender)) {
+            throw new IllegalArgumentException(sender.getName() + " can't send a message to themselves");
+        }
         this.sender = sender;
-        this.recipients = recipients;
+        this.recipients = uniqueRecipients;
         this.content = content;
         this.timestamp = timestamp;
     }
@@ -58,5 +69,13 @@ public class Message {
         throw new UnsupportedOperationException("TODO: Step 3");
     }
 
-    // TODO (Step 1): toString() that prints like "[14:05:09] Alice -> Bob, Charlie: Hello!"
+    @Override
+    public String toString() {
+        List<String> names = new ArrayList<>();
+        for (User recipient : recipients) {
+            names.add(recipient.getName());
+        }
+        return "[" + timestamp.format(TIME_FORMAT) + "] " + sender.getName() + " -> "
+                + String.join(", ", names) + ": " + content;
+    }
 }

@@ -2,6 +2,7 @@ package chatapp;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 
@@ -19,14 +20,12 @@ public class ChatHistory {
 
     /** Adds a message (sent or received) to the end of the history. */
     public void addMessage(Message message) {
-        // TODO (Step 1)
-        throw new UnsupportedOperationException("TODO: Step 1");
+        messages.add(message);
     }
 
     /** Read-only view of every message, oldest first. */
     public List<Message> getMessages() {
-        // TODO (Step 1)
-        throw new UnsupportedOperationException("TODO: Step 1");
+        return Collections.unmodifiableList(messages);
     }
 
     /** Caretaker: saves the snapshot of a message this user just sent. */
