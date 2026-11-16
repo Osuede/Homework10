@@ -17,192 +17,192 @@ import org.junit.jupiter.api.Test;
 class UserTest {
 
     private final ChatServer server = new ChatServer();
-    private final User alice = new User("Alice", server);
-    private final User bob = new User("Bob", server);
-    private final User charlie = new User("Charlie", server);
+    private final User omar = new User("Omar", server);
+    private final User kyhle = new User("Kyhle", server);
+    private final User ghina = new User("Ghina", server);
 
     @BeforeEach
     void registerEveryone() {
-        server.registerUser(alice);
-        server.registerUser(bob);
-        server.registerUser(charlie);
+        server.registerUser(omar);
+        server.registerUser(kyhle);
+        server.registerUser(ghina);
     }
 
     @Test
     void nameIsUsedForGetNameAndToString() {
-        assertEquals("Alice", alice.getName());
-        assertEquals("Alice", alice.toString());
+        assertEquals("Omar", omar.getName());
+        assertEquals("Omar", omar.toString());
     }
 
     @Test
     void sendMessageBuildsTheMessage() {
-        Message message = alice.sendMessage("Hello!", bob, charlie);
-        assertSame(alice, message.getSender());
-        assertEquals(List.of(bob, charlie), message.getRecipients());
+        Message message = omar.sendMessage("Hello!", kyhle, ghina);
+        assertSame(omar, message.getSender());
+        assertEquals(List.of(kyhle, ghina), message.getRecipients());
         assertEquals("Hello!", message.getContent());
     }
 
     @Test
     void sentMessageIsSavedInTheSendersHistory() {
-        Message message = alice.sendMessage("Hello!", bob);
-        assertEquals(List.of(message), alice.getChatHistory().getMessages());
+        Message message = omar.sendMessage("Hello!", kyhle);
+        assertEquals(List.of(message), omar.getChatHistory().getMessages());
     }
 
     @Test
     void sentMessageReachesEveryRecipientThroughTheServer() {
-        Message message = alice.sendMessage("Hello!", bob, charlie);
-        assertEquals(List.of(message), bob.getChatHistory().getMessages());
-        assertEquals(List.of(message), charlie.getChatHistory().getMessages());
+        Message message = omar.sendMessage("Hello!", kyhle, ghina);
+        assertEquals(List.of(message), kyhle.getChatHistory().getMessages());
+        assertEquals(List.of(message), ghina.getChatHistory().getMessages());
     }
 
     @Test
     void receiveMessageAddsItToTheHistory() {
-        Message message = new Message(alice, List.of(bob), "Hi");
-        bob.receiveMessage(message);
-        assertEquals(List.of(message), bob.getChatHistory().getMessages());
+        Message message = new Message(omar, List.of(kyhle), "Hi");
+        kyhle.receiveMessage(message);
+        assertEquals(List.of(message), kyhle.getChatHistory().getMessages());
     }
 
     @Test
     void historyHasSentAndReceivedMessagesInOrder() {
-        Message first = alice.sendMessage("Hi Bob", bob);
-        Message second = bob.sendMessage("Hi Alice", alice);
-        assertEquals(List.of(first, second), alice.getChatHistory().getMessages());
-        assertEquals(List.of(first, second), bob.getChatHistory().getMessages());
+        Message first = omar.sendMessage("Hi Kyhle", kyhle);
+        Message second = kyhle.sendMessage("Hi Omar", omar);
+        assertEquals(List.of(first, second), omar.getChatHistory().getMessages());
+        assertEquals(List.of(first, second), kyhle.getChatHistory().getMessages());
     }
 
     @Test
     void sendingToNobodyFails() {
-        assertThrows(IllegalArgumentException.class, () -> alice.sendMessage("Hello?"));
+        assertThrows(IllegalArgumentException.class, () -> omar.sendMessage("Hello?"));
     }
 
     @Test
     void failedSendIsNotSavedInTheSendersHistory() {
-        server.unregisterUser(alice);
-        assertThrows(IllegalStateException.class, () -> alice.sendMessage("Hi", bob));
-        assertTrue(alice.getChatHistory().getMessages().isEmpty());
+        server.unregisterUser(omar);
+        assertThrows(IllegalStateException.class, () -> omar.sendMessage("Hi", kyhle));
+        assertTrue(omar.getChatHistory().getMessages().isEmpty());
     }
 
     @Test
     void blockUserStopsMessagesFromThatUser() {
-        bob.blockUser(alice);
-        alice.sendMessage("Hi", bob);
-        assertTrue(bob.getChatHistory().getMessages().isEmpty());
+        kyhle.blockUser(omar);
+        omar.sendMessage("Hi", kyhle);
+        assertTrue(kyhle.getChatHistory().getMessages().isEmpty());
     }
 
     @Test
     void blockedSenderStillSeesTheirOwnMessage() {
-        bob.blockUser(alice);
-        Message message = alice.sendMessage("Hi", bob);
-        assertEquals(List.of(message), alice.getChatHistory().getMessages());
+        kyhle.blockUser(omar);
+        Message message = omar.sendMessage("Hi", kyhle);
+        assertEquals(List.of(message), omar.getChatHistory().getMessages());
     }
 
     @Test
     void unblockUserLetsMessagesThroughAgain() {
-        bob.blockUser(alice);
-        bob.unblockUser(alice);
-        Message message = alice.sendMessage("Hi", bob);
-        assertEquals(List.of(message), bob.getChatHistory().getMessages());
+        kyhle.blockUser(omar);
+        kyhle.unblockUser(omar);
+        Message message = omar.sendMessage("Hi", kyhle);
+        assertEquals(List.of(message), kyhle.getChatHistory().getMessages());
     }
 
     @Test
     void viewChatHistoryPrintsEveryMessage() {
-        alice.sendMessage("Hi Bob", bob);
-        bob.sendMessage("Hi Alice", alice);
-        String output = printedBy(() -> alice.viewChatHistory());
-        assertTrue(output.contains("Alice's chat history:"));
-        assertTrue(output.contains("Alice -> Bob: Hi Bob"));
-        assertTrue(output.contains("Bob -> Alice: Hi Alice"));
+        omar.sendMessage("Hi Kyhle", kyhle);
+        kyhle.sendMessage("Hi Omar", omar);
+        String output = printedBy(() -> omar.viewChatHistory());
+        assertTrue(output.contains("Omar's chat history:"));
+        assertTrue(output.contains("Omar -> Kyhle: Hi Kyhle"));
+        assertTrue(output.contains("Kyhle -> Omar: Hi Omar"));
     }
 
     @Test
     void viewChatHistorySaysWhenThereAreNoMessages() {
-        String output = printedBy(() -> charlie.viewChatHistory());
+        String output = printedBy(() -> ghina.viewChatHistory());
         assertTrue(output.contains("(no messages)"));
     }
 
     @Test
     void sendingAMessageSavesAMementoOfIt() {
-        Message message = alice.sendMessage("Hello!", bob);
-        MessageMemento memento = alice.getChatHistory().getLastMessageSent();
+        Message message = omar.sendMessage("Hello!", kyhle);
+        MessageMemento memento = omar.getChatHistory().getLastMessageSent();
         assertEquals("Hello!", memento.getContent());
         assertEquals(message.getTimestamp(), memento.getTimestamp());
     }
 
     @Test
     void undoLastMessageRemovesItFromTheSenderAndEveryRecipient() {
-        alice.sendMessage("Oops, wrong chat", bob, charlie);
-        alice.undoLastMessage();
-        assertTrue(alice.getChatHistory().getMessages().isEmpty());
-        assertTrue(bob.getChatHistory().getMessages().isEmpty());
-        assertTrue(charlie.getChatHistory().getMessages().isEmpty());
+        omar.sendMessage("Oops, wrong chat", kyhle, ghina);
+        omar.undoLastMessage();
+        assertTrue(omar.getChatHistory().getMessages().isEmpty());
+        assertTrue(kyhle.getChatHistory().getMessages().isEmpty());
+        assertTrue(ghina.getChatHistory().getMessages().isEmpty());
     }
 
     @Test
     void undoLastMessageReturnsTheMementoThatWasUndone() {
-        Message message = alice.sendMessage("Oops", bob);
-        MessageMemento undone = alice.undoLastMessage();
+        Message message = omar.sendMessage("Oops", kyhle);
+        MessageMemento undone = omar.undoLastMessage();
         assertEquals("Oops", undone.getContent());
         assertEquals(message.getTimestamp(), undone.getTimestamp());
     }
 
     @Test
     void undoOnlyRemovesTheLastMessage() {
-        Message first = alice.sendMessage("First", bob);
-        alice.sendMessage("Second", bob);
-        alice.undoLastMessage();
-        assertEquals(List.of(first), alice.getChatHistory().getMessages());
-        assertEquals(List.of(first), bob.getChatHistory().getMessages());
+        Message first = omar.sendMessage("First", kyhle);
+        omar.sendMessage("Second", kyhle);
+        omar.undoLastMessage();
+        assertEquals(List.of(first), omar.getChatHistory().getMessages());
+        assertEquals(List.of(first), kyhle.getChatHistory().getMessages());
     }
 
     @Test
     void undoingTwiceRemovesTheLastTwoMessages() {
-        alice.sendMessage("First", bob);
-        alice.sendMessage("Second", bob);
-        alice.undoLastMessage();
-        alice.undoLastMessage();
-        assertTrue(alice.getChatHistory().getMessages().isEmpty());
-        assertTrue(bob.getChatHistory().getMessages().isEmpty());
+        omar.sendMessage("First", kyhle);
+        omar.sendMessage("Second", kyhle);
+        omar.undoLastMessage();
+        omar.undoLastMessage();
+        assertTrue(omar.getChatHistory().getMessages().isEmpty());
+        assertTrue(kyhle.getChatHistory().getMessages().isEmpty());
     }
 
     @Test
     void undoNeverRemovesMessagesFromOtherUsers() {
-        Message fromBob = bob.sendMessage("Hi Alice", alice);
-        alice.sendMessage("Oops", bob);
-        alice.undoLastMessage();
-        assertEquals(List.of(fromBob), alice.getChatHistory().getMessages());
-        assertEquals(List.of(fromBob), bob.getChatHistory().getMessages());
+        Message fromKyhle = kyhle.sendMessage("Hi Omar", omar);
+        omar.sendMessage("Oops", kyhle);
+        omar.undoLastMessage();
+        assertEquals(List.of(fromKyhle), omar.getChatHistory().getMessages());
+        assertEquals(List.of(fromKyhle), kyhle.getChatHistory().getMessages());
     }
 
     @Test
     void undoWithNothingSentReturnsNull() {
-        assertNull(alice.undoLastMessage());
+        assertNull(omar.undoLastMessage());
     }
 
     @Test
     void undoWorksEvenIfARecipientBlockedTheSender() {
-        bob.blockUser(alice);
-        alice.sendMessage("Hi both", bob, charlie);
-        alice.undoLastMessage();
-        assertTrue(alice.getChatHistory().getMessages().isEmpty());
-        assertTrue(charlie.getChatHistory().getMessages().isEmpty());
+        kyhle.blockUser(omar);
+        omar.sendMessage("Hi both", kyhle, ghina);
+        omar.undoLastMessage();
+        assertTrue(omar.getChatHistory().getMessages().isEmpty());
+        assertTrue(ghina.getChatHistory().getMessages().isEmpty());
     }
 
     @Test
     void failedUndoChangesNothing() {
-        Message message = alice.sendMessage("Oops", bob);
-        server.unregisterUser(alice);
-        assertThrows(IllegalStateException.class, () -> alice.undoLastMessage());
-        assertEquals(List.of(message), alice.getChatHistory().getMessages());
-        assertEquals(List.of(message), bob.getChatHistory().getMessages());
-        assertNotNull(alice.getChatHistory().getLastMessageSent(), "the memento should still be there to try again");
+        Message message = omar.sendMessage("Oops", kyhle);
+        server.unregisterUser(omar);
+        assertThrows(IllegalStateException.class, () -> omar.undoLastMessage());
+        assertEquals(List.of(message), omar.getChatHistory().getMessages());
+        assertEquals(List.of(message), kyhle.getChatHistory().getMessages());
+        assertNotNull(omar.getChatHistory().getLastMessageSent(), "the memento should still be there to try again");
     }
 
     @Test
     void receiveUndoRemovesThatMessageFromTheHistory() {
-        Message message = new Message(alice, List.of(bob), "Oops");
-        bob.receiveMessage(message);
-        bob.receiveUndo(alice, message.createMemento());
-        assertTrue(bob.getChatHistory().getMessages().isEmpty());
+        Message message = new Message(omar, List.of(kyhle), "Oops");
+        kyhle.receiveMessage(message);
+        kyhle.receiveUndo(omar, message.createMemento());
+        assertTrue(kyhle.getChatHistory().getMessages().isEmpty());
     }
 
     private static String printedBy(Runnable action) {

@@ -13,15 +13,15 @@ import org.junit.jupiter.api.Test;
 class ChatServerTest {
 
     private final ChatServer server = new ChatServer();
-    private final User alice = new User("Alice", server);
-    private final User bob = new User("Bob", server);
-    private final User charlie = new User("Charlie", server);
+    private final User omar = new User("Omar", server);
+    private final User kyhle = new User("Kyhle", server);
+    private final User ghina = new User("Ghina", server);
 
     @BeforeEach
     void registerEveryone() {
-        server.registerUser(alice);
-        server.registerUser(bob);
-        server.registerUser(charlie);
+        server.registerUser(omar);
+        server.registerUser(kyhle);
+        server.registerUser(ghina);
     }
 
     @Test
@@ -34,112 +34,112 @@ class ChatServerTest {
 
     @Test
     void unregisterUserMakesTheUserUnregistered() {
-        server.unregisterUser(bob);
-        assertFalse(server.isRegistered(bob));
+        server.unregisterUser(kyhle);
+        assertFalse(server.isRegistered(kyhle));
     }
 
     @Test
     void registeringTwiceStillDeliversOnlyOnce() {
-        server.registerUser(bob);
-        server.sendMessage(new Message(alice, List.of(bob), "Hi"));
-        assertEquals(1, bob.getChatHistory().getMessages().size());
+        server.registerUser(kyhle);
+        server.sendMessage(new Message(omar, List.of(kyhle), "Hi"));
+        assertEquals(1, kyhle.getChatHistory().getMessages().size());
     }
 
     @Test
     void deliversToOneRecipient() {
-        Message message = new Message(alice, List.of(bob), "Hi Bob");
+        Message message = new Message(omar, List.of(kyhle), "Hi Kyhle");
         server.sendMessage(message);
-        assertEquals(List.of(message), bob.getChatHistory().getMessages());
-        assertTrue(charlie.getChatHistory().getMessages().isEmpty(), "Charlie was not a recipient");
+        assertEquals(List.of(message), kyhle.getChatHistory().getMessages());
+        assertTrue(ghina.getChatHistory().getMessages().isEmpty(), "Ghina was not a recipient");
     }
 
     @Test
     void deliversToSeveralRecipients() {
-        Message message = new Message(alice, List.of(bob, charlie), "Hi both");
+        Message message = new Message(omar, List.of(kyhle, ghina), "Hi both");
         server.sendMessage(message);
-        assertEquals(List.of(message), bob.getChatHistory().getMessages());
-        assertEquals(List.of(message), charlie.getChatHistory().getMessages());
+        assertEquals(List.of(message), kyhle.getChatHistory().getMessages());
+        assertEquals(List.of(message), ghina.getChatHistory().getMessages());
     }
 
     @Test
     void skipsRecipientsWhoAreNotRegistered() {
-        server.unregisterUser(charlie);
-        server.sendMessage(new Message(alice, List.of(bob, charlie), "Hi both"));
-        assertEquals(1, bob.getChatHistory().getMessages().size());
-        assertTrue(charlie.getChatHistory().getMessages().isEmpty(), "Charlie is not registered");
+        server.unregisterUser(ghina);
+        server.sendMessage(new Message(omar, List.of(kyhle, ghina), "Hi both"));
+        assertEquals(1, kyhle.getChatHistory().getMessages().size());
+        assertTrue(ghina.getChatHistory().getMessages().isEmpty(), "Ghina is not registered");
     }
 
     @Test
     void senderMustBeRegistered() {
-        server.unregisterUser(alice);
-        Message message = new Message(alice, List.of(bob), "Hi");
+        server.unregisterUser(omar);
+        Message message = new Message(omar, List.of(kyhle), "Hi");
         assertThrows(IllegalStateException.class, () -> server.sendMessage(message));
-        assertTrue(bob.getChatHistory().getMessages().isEmpty());
+        assertTrue(kyhle.getChatHistory().getMessages().isEmpty());
     }
 
     @Test
     void doesNotDeliverToSomeoneWhoBlockedTheSender() {
-        server.blockUser(bob, alice);
-        server.sendMessage(new Message(alice, List.of(bob, charlie), "Hi both"));
-        assertTrue(bob.getChatHistory().getMessages().isEmpty(), "Bob blocked Alice");
-        assertEquals(1, charlie.getChatHistory().getMessages().size(), "Charlie did not block Alice");
+        server.blockUser(kyhle, omar);
+        server.sendMessage(new Message(omar, List.of(kyhle, ghina), "Hi both"));
+        assertTrue(kyhle.getChatHistory().getMessages().isEmpty(), "Kyhle blocked Omar");
+        assertEquals(1, ghina.getChatHistory().getMessages().size(), "Ghina did not block Omar");
     }
 
     @Test
     void blockingOnlyWorksOneWay() {
-        server.blockUser(bob, alice);
-        server.sendMessage(new Message(bob, List.of(alice), "Hi Alice"));
-        assertEquals(1, alice.getChatHistory().getMessages().size(), "Alice never blocked Bob");
+        server.blockUser(kyhle, omar);
+        server.sendMessage(new Message(kyhle, List.of(omar), "Hi Omar"));
+        assertEquals(1, omar.getChatHistory().getMessages().size(), "Omar never blocked Kyhle");
     }
 
     @Test
     void unblockUserDeliversAgain() {
-        server.blockUser(bob, alice);
-        server.unblockUser(bob, alice);
-        server.sendMessage(new Message(alice, List.of(bob), "Hi"));
-        assertEquals(1, bob.getChatHistory().getMessages().size());
+        server.blockUser(kyhle, omar);
+        server.unblockUser(kyhle, omar);
+        server.sendMessage(new Message(omar, List.of(kyhle), "Hi"));
+        assertEquals(1, kyhle.getChatHistory().getMessages().size());
     }
 
     @Test
     void isBlockedOnlyReportsActualBlocks() {
-        assertFalse(server.isBlocked(bob, alice));
-        server.blockUser(bob, alice);
-        assertTrue(server.isBlocked(bob, alice));
-        assertFalse(server.isBlocked(alice, bob), "blocking is one way");
-        assertFalse(server.isBlocked(bob, charlie), "Bob only blocked Alice");
+        assertFalse(server.isBlocked(kyhle, omar));
+        server.blockUser(kyhle, omar);
+        assertTrue(server.isBlocked(kyhle, omar));
+        assertFalse(server.isBlocked(omar, kyhle), "blocking is one way");
+        assertFalse(server.isBlocked(kyhle, ghina), "Kyhle only blocked Omar");
     }
 
     @Test
     void unblockingSomeoneWhoWasNeverBlockedDoesNothing() {
-        server.unblockUser(bob, alice);
-        assertFalse(server.isBlocked(bob, alice));
+        server.unblockUser(kyhle, omar);
+        assertFalse(server.isBlocked(kyhle, omar));
     }
 
     @Test
     void undoMessageRemovesItFromEveryRecipient() {
-        Message message = new Message(alice, List.of(bob, charlie), "oops");
+        Message message = new Message(omar, List.of(kyhle, ghina), "oops");
         server.sendMessage(message);
-        server.undoMessage(alice, message.createMemento());
-        assertTrue(bob.getChatHistory().getMessages().isEmpty());
-        assertTrue(charlie.getChatHistory().getMessages().isEmpty());
+        server.undoMessage(omar, message.createMemento());
+        assertTrue(kyhle.getChatHistory().getMessages().isEmpty());
+        assertTrue(ghina.getChatHistory().getMessages().isEmpty());
     }
 
     @Test
     void undoMessageLeavesOtherMessagesAlone() {
-        Message keep = new Message(alice, List.of(bob), "keep me");
-        Message oops = new Message(alice, List.of(bob), "oops");
+        Message keep = new Message(omar, List.of(kyhle), "keep me");
+        Message oops = new Message(omar, List.of(kyhle), "oops");
         server.sendMessage(keep);
         server.sendMessage(oops);
-        server.undoMessage(alice, oops.createMemento());
-        assertEquals(List.of(keep), bob.getChatHistory().getMessages());
+        server.undoMessage(omar, oops.createMemento());
+        assertEquals(List.of(keep), kyhle.getChatHistory().getMessages());
     }
 
     @Test
     void undoMessageNeedsARegisteredSender() {
-        Message message = new Message(alice, List.of(bob), "oops");
+        Message message = new Message(omar, List.of(kyhle), "oops");
         server.sendMessage(message);
-        server.unregisterUser(alice);
-        assertThrows(IllegalStateException.class, () -> server.undoMessage(alice, message.createMemento()));
-        assertEquals(1, bob.getChatHistory().getMessages().size(), "Bob should still have the message");
+        server.unregisterUser(omar);
+        assertThrows(IllegalStateException.class, () -> server.undoMessage(omar, message.createMemento()));
+        assertEquals(1, kyhle.getChatHistory().getMessages().size(), "Kyhle should still have the message");
     }
 }
