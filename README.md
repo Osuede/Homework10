@@ -36,10 +36,12 @@ java -cp target/classes chatapp.ChatDriver
 
 ```
 src/main/java/chatapp/
-  Message.java          one message: sender, recipients, timestamp, content (Memento: originator)
-  MessageMemento.java   snapshot of a sent message: content + timestamp (Memento: memento)
-  ChatHistory.java      one user's messages + undo snapshots (Memento: caretaker)
-  ChatServer.java       registers users, routes messages, blocks, undoes (Mediator: mediator)
-  User.java             sends, receives, undoes, blocks, only through the server (Mediator: colleague)
-  ChatDriver.java       demo with 3 users
+  Message.java               one message: sender, recipients, timestamp, content (Memento: originator)
+  MessageMemento.java        snapshot of a sent message: content + timestamp (Memento: memento)
+  ChatHistory.java           one user's messages + undo snapshots (Memento: caretaker, Iterator: aggregate)
+  ChatServer.java            registers users, routes messages, blocks, undoes (Mediator: mediator)
+  User.java                  sends, receives, undoes, blocks, only through the server (Mediator: colleague)
+  IterableByUser.java        iterator(User) instead of Iterable's iterator() (Iterator: aggregate interface)
+  SearchMessagesByUser.java  steps through the messages sent or received by one user (Iterator: iterator)
+  ChatDriver.java            demo with 3 users
 ```

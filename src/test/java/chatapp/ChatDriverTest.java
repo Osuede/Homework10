@@ -34,6 +34,16 @@ class ChatDriverTest {
         assertFalse(histories.contains("room 999"), "the undone message should be gone from every history");
     }
 
+    @Test
+    void mainShowsTheIteratorSearchingAHistoryByUser() {
+        String output = printedBy(() -> ChatDriver.main(new String[0]));
+        String search = output.substring(output.indexOf("Messages in Omar's history sent or received by Ghina:"),
+                output.indexOf("Messages in Ghina's history sent or received by Omar:"));
+        assertTrue(search.contains("Study group is in room 210."), "Omar sent this to Ghina");
+        assertTrue(search.contains("Thanks, I'll bring snacks."), "Ghina sent this to Omar");
+        assertFalse(search.contains("Hey Kyhle"), "this one was only between Omar and Kyhle");
+    }
+
     private static String printedBy(Runnable action) {
         PrintStream originalOut = System.out;
         ByteArrayOutputStream printed = new ByteArrayOutputStream();

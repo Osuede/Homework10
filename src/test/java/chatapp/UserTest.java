@@ -1,6 +1,7 @@
 package chatapp;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -9,6 +10,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -203,6 +206,45 @@ class UserTest {
         kyhle.receiveMessage(message);
         kyhle.receiveUndo(omar, message.createMemento());
         assertTrue(kyhle.getChatHistory().getMessages().isEmpty());
+    }
+
+    @Test
+    void iteratorFindsMessagesWithAnotherUserInThisUsersHistory() {
+        Message toKyhle = omar.sendMessage("Hi Kyhle", kyhle);
+        ghina.sendMessage("Hi Omar", omar);
+        Message fromKyhle = kyhle.sendMessage("Hi both", omar, ghina);
+        assertEquals(List.of(toKyhle, fromKyhle), collect(omar.iterator(kyhle)));
+    }
+
+    @Test
+    void iteratorGivesTheSameMessagesAsTheChatHistoryIterator() {
+        omar.sendMessage("Hi Kyhle", kyhle);
+        ghina.sendMessage("Hi Omar", omar);
+        kyhle.sendMessage("Hi both", omar, ghina);
+        assertEquals(collect(omar.getChatHistory().iterator(kyhle)), collect(omar.iterator(kyhle)));
+    }
+
+    @Test
+    void iteratorOnlySearchesThisUsersOwnHistory() {
+        ghina.blockUser(kyhle);
+        Message message = kyhle.sendMessage("Hi both", omar, ghina);
+        assertEquals(List.of(message), collect(omar.iterator(kyhle)));
+        assertFalse(ghina.iterator(kyhle).hasNext(), "the message never reached Ghina's history");
+    }
+
+    @Test
+    void iteratorDoesNotFindUndoneMessages() {
+        omar.sendMessage("Oops", kyhle);
+        omar.undoLastMessage();
+        assertFalse(kyhle.iterator(omar).hasNext());
+    }
+
+    private static List<Message> collect(Iterator<Message> iterator) {
+        List<Message> found = new ArrayList<>();
+        while (iterator.hasNext()) {
+            found.add(iterator.next());
+        }
+        return found;
     }
 
     private static String printedBy(Runnable action) {

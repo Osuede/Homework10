@@ -1,9 +1,10 @@
 package chatapp;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
-public class User {
+public class User implements IterableByUser {
     private final String name;
     private final ChatServer chatServer; // the mediator: the only object this user talks to
     private final ChatHistory chatHistory = new ChatHistory();
@@ -69,6 +70,11 @@ public class User {
         for (Message message : messages) {
             System.out.println("  " + message);
         }
+    }
+
+    @Override
+    public Iterator<Message> iterator(User userToSearchWith) {
+        return chatHistory.iterator(userToSearchWith);
     }
 
     @Override

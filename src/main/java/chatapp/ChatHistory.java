@@ -4,9 +4,10 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.Iterator;
 import java.util.List;
 
-public class ChatHistory {
+public class ChatHistory implements IterableByUser {
     private final List<Message> messages = new ArrayList<>();
     private final Deque<MessageMemento> sentMementos = new ArrayDeque<>();
 
@@ -53,5 +54,10 @@ public class ChatHistory {
             }
         }
         return false;
+    }
+
+    @Override
+    public Iterator<Message> iterator(User userToSearchWith) {
+        return new SearchMessagesByUser(getMessages(), userToSearchWith);
     }
 }

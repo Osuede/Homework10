@@ -1,8 +1,7 @@
 package chatapp;
 
-/**
- * Demo with 3 users (Omar, Kyhle, Ghina) that shows every required feature.
- */
+import java.util.Iterator;
+
 public class ChatDriver {
     public static void main(String[] args) {
         ChatServer server = new ChatServer();
@@ -44,11 +43,22 @@ public class ChatDriver {
         kyhle.viewChatHistory();
         ghina.viewChatHistory();
 
-        // TODO (Step 5): iterating over a user's history by a specific user (Iterator)
+        printSection("Search a chat history by user (Iterator)");
+        printMessagesWith(omar, ghina);
+        printMessagesWith(ghina, omar);
     }
 
     private static void printSection(String title) {
         System.out.println();
         System.out.println("===== " + title + " =====");
+    }
+
+    private static void printMessagesWith(User owner, User userToSearchWith) {
+        System.out.println("Messages in " + owner.getName() + "'s history sent or received by "
+                + userToSearchWith.getName() + ":");
+        Iterator<Message> iterator = owner.iterator(userToSearchWith);
+        while (iterator.hasNext()) {
+            System.out.println("  " + iterator.next());
+        }
     }
 }

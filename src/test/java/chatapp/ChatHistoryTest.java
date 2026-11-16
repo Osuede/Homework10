@@ -8,6 +8,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -17,6 +19,7 @@ class ChatHistoryTest {
     private final ChatServer server = new ChatServer();
     private final User omar = new User("Omar", server);
     private final User kyhle = new User("Kyhle", server);
+    private final User ghina = new User("Ghina", server);
     private final ChatHistory history = new ChatHistory();
     private final LocalDateTime time = LocalDateTime.of(2026, 11, 16, 14, 5, 9);
 
@@ -104,5 +107,37 @@ class ChatHistoryTest {
         MessageMemento other = new Message(omar, List.of(kyhle), "something else", time).createMemento();
         assertFalse(history.removeMessage(omar, other));
         assertEquals(1, history.getMessages().size());
+    }
+
+    @Test
+    void iteratorFindsOnlyMessagesSentOrReceivedByThatUser() {
+        Message omarToKyhle = new Message(omar, List.of(kyhle), "hi Kyhle", time);
+        Message omarToGhina = new Message(omar, List.of(ghina), "hi Ghina", time);
+        Message ghinaToOmar = new Message(ghina, List.of(omar), "hi Omar", time);
+        history.addMessage(omarToKyhle);
+        history.addMessage(omarToGhina);
+        history.addMessage(ghinaToOmar);
+        assertEquals(List.of(omarToGhina, ghinaToOmar), collect(history.iterator(ghina)));
+    }
+
+    @Test
+    void canBeSearchedThroughTheIterableByUserInterface() {
+        Message message = new Message(omar, List.of(kyhle), "hi", time);
+        history.addMessage(message);
+        IterableByUser searchable = history;
+        assertEquals(List.of(message), collect(searchable.iterator(kyhle)));
+    }
+
+    @Test
+    void iteratorOnAnEmptyHistoryHasNoNext() {
+        assertFalse(history.iterator(omar).hasNext());
+    }
+
+    private static List<Message> collect(Iterator<Message> iterator) {
+        List<Message> found = new ArrayList<>();
+        while (iterator.hasNext()) {
+            found.add(iterator.next());
+        }
+        return found;
     }
 }
